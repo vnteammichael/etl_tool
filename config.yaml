@@ -1,0 +1,12 @@
+clickhouse:
+  host: localhost
+  port: 9000
+  user: root
+  password: sh2vfaKW89uH
+  database: default
+mysql:
+  host: 13.251.103.235
+  port: 3306
+  user: root
+  password: sh2vfaKW89uH
+  database: data_tracking
