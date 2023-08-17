@@ -40,19 +40,33 @@ def main():
     config = read_config_from_file()
     mysql = MySQLConnector(**config['mysql'])
     clickhouse = ClickHouseConnector(**config['clickhouse'])
-    cols = ["time", "source", "action", "agent_line", "user_agent_data", "device_info", "os_info", "ip_address", "latitude", "longitude", "country", "region", "city", "user_id", "phone", "email"]
-    query = f"SELECT {' ,'.join(cols)} FROM {config['clickhouse']['database']}.LogTracking "
+    cols = ["time", "source", "action", "agent_code", "user_agent_data", "device_info", "os_info", "ip_address", "latitude", "longitude", "country", "region", "region_code", "city", "user_id", "phone", "email"]
+    query = f"SELECT {' ,'.join(cols)} FROM {config['clickhouse']['database']}.{config['table']['log']} WHERE toDate(time,'Asia/Hanoi') = '{date}' "
 
     result = clickhouse.read_query_as_dataframe(query,cols =cols)
-    result['time'] = pd.to_datetime(result["time"]).dt.date
+    # result['time'] = result['time'].dt.tz_convert('Asia/Ho_chi_minh')
+    result['time'] = date
+
+
+    agent_mapping  = clickhouse.read_query_as_dataframe("SELECT agent_line,agent_code FROM data_tracking.agent_mapping",cols =['agent_line','agent_code'])
+    # print(agent_mapping)
+    result = result.merge(agent_mapping,how='left',on='agent_code')
 
     #delete duplicated
     mysql.delete_data_by_condition(table="metric_report",condition_dict={"report_date":date})
 
+
+
     t1_n1.run(result,mysql)
     t2_new_user_per_ip.run(result,mysql)
     t3_new_user_per_locate.run(result,mysql)
-
+    t4_a1.run(result,mysql)
+    t5_a1_per_device.run(result,mysql)
+    t6_a1_per_country.run(result,mysql)
+    t7_a1_per_region.run(result,mysql)
+    t8_a1_per_city.run(result,mysql)
+    t9_top_login_ip.run(result,mysql)
+    t10_n1_per_device.run(result,mysql)
 
     return
 

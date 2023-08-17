@@ -4,24 +4,24 @@ def run(df,mysql):
 
     try:
         #your code
-        result = df[df['action'] == 'register'].groupby(['time', 'source', 'country', 'region', 'region_code']).agg(
+        result = df[df['action'] == 'login'].groupby(['time', 'source', 'ip_address']).agg(
             {
                 "user_id":"count"
             }
         )
         result.reset_index(inplace=True)
-        result.columns = ["report_date","source","dim1","dim2","dim3","num1"]
-        result['metric'] = "t3_new_user_per_locate"
+        result.columns = ["report_date","source","dim1","num1"]
+        result['metric'] = "t9_top_login_ip"
         mysql.insert_dataframe("metric_report",result) 
         
         
         
         #save detail
         detail = {
-            "metric":"t3_new_user_per_locate",
-            "dim1":"country",
-            "dim2":"region",
-            "dim3":"region_code",
+            "metric":"t9_top_login_ip",
+            "dim1":"ip_address",
+            "dim2":"",
+            "dim3":"",
             "num1":"count",
             "num2":""
         }

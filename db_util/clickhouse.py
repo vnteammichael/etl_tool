@@ -1,4 +1,4 @@
-from clickhouse_driver import Client
+import clickhouse_connect 
 import pandas as pd
 
 class ClickHouseConnector:
@@ -10,14 +10,8 @@ class ClickHouseConnector:
         self.client = None
 
     def connect(self):
-        self.client = Client(host=self.host, port=self.port, user=self.user, password=self.password)
+        self.client = clickhouse_connect.get_client(host=self.host, port=self.port, user=self.user, password=self.password)
 
-    def execute_query(self, query):
-        if not self.client:
-            self.connect()
-
-        result = self.client.execute(query)
-        return result
     
     def read_query_as_dataframe(self, query, cols, chunk_size=10000):
         if not self.client:
@@ -28,13 +22,15 @@ class ClickHouseConnector:
 
         while True:
             query_with_offset = f'{query} LIMIT {chunk_size} OFFSET {offset}'
-            result = self.client.execute(query_with_offset)
+            result = self.client.query(query_with_offset)
 
-            if not result:
+            if len(result.result_rows) == 0:
                 break
 
             # columns = [col[0] for col in result.cursor.description]
-            data = [list(row) for row in result]
+   
+            data = [list(row) for row in result.result_rows]
+
             df = pd.DataFrame(data, columns=cols)
             dfs.append(df)
 
