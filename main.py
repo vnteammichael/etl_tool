@@ -3,7 +3,8 @@ from db_util.mysql import MySQLConnector
 from db_util.clickhouse import ClickHouseConnector 
 import pandas as pd
 import argparse
-from datetime import datetime
+from datetime import date
+from datetime import timedelta
 
 from task import *
 
@@ -32,7 +33,8 @@ def read_config_from_file(filename: str = "config.yaml"):
 def main():
     args = init_param()
 
-    date = datetime.now().strftime("%Y-%m-%d") if args.date is None else args.date 
+    today = date.today()
+    yesterday = today - timedelta(days = 1) if args.date is None else args.date 
     mode = "all" if args.mode is None else args.mode
 
     
@@ -41,11 +43,11 @@ def main():
     mysql = MySQLConnector(**config['mysql'])
     clickhouse = ClickHouseConnector(**config['clickhouse'])
     cols = ["time", "source", "action", "agent_code", "user_agent_data", "device_info", "os_info", "ip_address", "latitude", "longitude", "country", "region", "region_code", "city", "user_id", "phone", "email"]
-    query = f"SELECT {' ,'.join(cols)} FROM {config['clickhouse']['database']}.{config['table']['log']} WHERE toDate(time,'Asia/Hanoi') = '{date}' "
+    query = f"SELECT {' ,'.join(cols)} FROM {config['clickhouse']['database']}.{config['table']['log']} WHERE toDate(time,'Asia/Hanoi') = '{yesterday}' "
 
     result = clickhouse.read_query_as_dataframe(query,cols =cols)
     # result['time'] = result['time'].dt.tz_convert('Asia/Ho_chi_minh')
-    result['time'] = date
+    result['time'] = yesterday
 
 
     agent_mapping  = clickhouse.read_query_as_dataframe("SELECT agent_line,agent_code FROM data_tracking.agent_mapping",cols =['agent_line','agent_code'])
@@ -53,7 +55,7 @@ def main():
     result = result.merge(agent_mapping,how='left',on='agent_code')
 
     #delete duplicated
-    mysql.delete_data_by_condition(table="metric_report",condition_dict={"report_date":date})
+    mysql.delete_data_by_condition(table="metric_report",condition_dict={"report_date":yesterday})
 
 
 
