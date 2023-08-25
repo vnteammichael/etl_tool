@@ -4,6 +4,7 @@ def run(df,mysql):
 
     try:
         #your code
+        df['device_info'] = df['device_info'].map(lambda x: x.lower())
         result = df[df['action'] == 'login'].groupby(['time', 'source', 'device_info']).agg(
             {
                 "user_id":"nunique"
