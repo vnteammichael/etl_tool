@@ -5,6 +5,7 @@ import pandas as pd
 import argparse
 from datetime import date
 from datetime import timedelta
+import os
 
 from task import *
 
@@ -18,7 +19,10 @@ def init_param():
     args = parser.parse_args()
     return args
 
-def read_config_from_file(filename: str = "config.yaml"):
+script_dir = os.path.dirname(os.path.abspath(__file__))
+data_file_path = os.path.join(script_dir, 'config.yaml')
+
+def read_config_from_file(filename: str = data_file_path):
     try:
         with open(filename, "r") as file:
             config = yaml.safe_load(file)
